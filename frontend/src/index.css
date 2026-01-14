@@ -1,0 +1,188 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Stranger Things Dark Theme */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 95%;
+
+    /* Neon Red Primary */
+    --primary: 0 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 0 100% 60%;
+
+    /* Deep Blue Secondary */
+    --secondary: 220 60% 15%;
+    --secondary-foreground: 0 0% 95%;
+
+    --muted: 220 20% 12%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 0 70% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 12%;
+    --ring: 0 85% 50%;
+
+    --radius: 0.5rem;
+
+    /* Custom Stranger Things Variables */
+    --neon-red: 0 100% 50%;
+    --neon-blue: 220 100% 60%;
+    --deep-void: 240 30% 3%;
+    --fog: 220 20% 25%;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer components {
+  /* Retro Display Font */
+  .font-stranger {
+    font-family: 'Creepster', cursive;
+  }
+
+  /* Neon Glow Text Effect */
+  .neon-text {
+    color: hsl(var(--primary));
+    text-shadow: 
+      0 0 5px hsl(var(--primary) / 0.8),
+      0 0 10px hsl(var(--primary) / 0.6),
+      0 0 20px hsl(var(--primary) / 0.4),
+      0 0 40px hsl(var(--primary) / 0.3);
+  }
+
+  /* Neon Glow Box */
+  .neon-box {
+    box-shadow: 
+      0 0 10px hsl(var(--primary) / 0.3),
+      0 0 20px hsl(var(--primary) / 0.2),
+      0 0 40px hsl(var(--primary) / 0.1),
+      inset 0 0 20px hsl(var(--primary) / 0.05);
+  }
+
+  /* Subtle Flicker Animation */
+  .flicker {
+    animation: flicker 3s infinite alternate;
+  }
+
+  /* Pulse Glow Animation */
+  .pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* Fog/Particle Background */
+  .fog-bg {
+    background: 
+      radial-gradient(ellipse at 20% 80%, hsl(var(--neon-red) / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(var(--neon-blue) / 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, hsl(var(--fog) / 0.1) 0%, transparent 70%),
+      linear-gradient(180deg, hsl(var(--deep-void)) 0%, hsl(var(--background)) 100%);
+  }
+
+  /* Input Glow on Focus */
+  .input-stranger {
+    @apply bg-input border-2 border-muted rounded-lg transition-all duration-300;
+  }
+
+  .input-stranger:focus {
+    border-color: hsl(var(--primary));
+    box-shadow: 
+      0 0 10px hsl(var(--primary) / 0.4),
+      0 0 20px hsl(var(--primary) / 0.2);
+  }
+
+  /* Button Glow Hover */
+  .btn-stranger {
+    @apply bg-primary text-primary-foreground font-semibold uppercase tracking-wider;
+    @apply transition-all duration-300 ease-out;
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.4);
+  }
+
+  .btn-stranger:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 0 20px hsl(var(--primary) / 0.6),
+      0 0 40px hsl(var(--primary) / 0.4),
+      0 0 60px hsl(var(--primary) / 0.2);
+  }
+
+  .btn-stranger:active {
+    transform: translateY(0);
+  }
+
+  /* Success Message */
+  .success-message {
+    color: hsl(120 60% 50%);
+    text-shadow: 0 0 10px hsl(120 60% 50% / 0.5);
+  }
+
+  /* Logo Container */
+  .logo-container {
+    @apply bg-card/50 border border-muted/30 rounded-xl backdrop-blur-sm;
+    box-shadow: 0 4px 30px hsl(var(--background) / 0.5);
+  }
+}
+
+@layer utilities {
+  @keyframes flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+      opacity: 1;
+    }
+    20%, 24%, 55% {
+      opacity: 0.85;
+    }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% {
+      opacity: 1;
+      filter: brightness(1);
+    }
+    50% {
+      opacity: 0.9;
+      filter: brightness(1.1);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+}
