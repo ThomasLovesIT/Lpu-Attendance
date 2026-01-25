@@ -1,10 +1,8 @@
 // src/lib/utils.js
-// frontend/utils/api.js
 import api from './axios.js';
 
 export const apiRequest = async (endpoint, options = {}) => {
   try {
-    // Determine method and data
     const { method = 'GET', body, headers } = options;
 
     const response = await api({
@@ -23,7 +21,55 @@ export const apiRequest = async (endpoint, options = {}) => {
   }
 };
 
-// Standard date (Oct 24, 2023)
+// Regular student registration
+export const registerStudent = async (studentData) => {
+  try {
+    const response = await apiRequest('/students/register', {
+      method: 'POST',
+      body: JSON.stringify(studentData),
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Guest registration with auto time-in
+export const registerGuestAndTimeIn = async (guestData) => {
+  try {
+    const response = await apiRequest('/guests/register-and-timein', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...guestData,
+        timestamp: new Date().toISOString(),
+        status: 'active'
+      }),
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const checkStudent = async (studentId) => {
+  try {
+    const response = await apiRequest(`/students/${studentId}`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getTodayStats = async () => {
+  try {
+    const response = await apiRequest('/attendance/stats/today');
+    return response.data;
+  } catch (error) {
+    console.log('Stats fetch error:', error);
+    return { total: 0, timeIn: 0, timeOut: 0, registered: 0 };
+  }
+};
+
 export const formatDate = (date) => {
   if (!date) return "";
   return new Intl.DateTimeFormat("en-US", {
@@ -33,7 +79,6 @@ export const formatDate = (date) => {
   }).format(new Date(date));
 };
 
-// Philippine Time (Oct 24, 2023, 10:30 AM)
 export const formatPHDate = (date) => {
   if (!date) return "";
   

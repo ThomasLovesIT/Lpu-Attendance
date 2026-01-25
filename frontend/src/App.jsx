@@ -3,20 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast'; 
 
-
-
 import RateLimitedUi from './components/RateLimitedUi.jsx';
-
 import TimeIn from './pages/TimeInPage.jsx';
 import TimeOut from './pages/TimeOutPage.jsx';
-
-
-
 
 const App = () => {
   const [isThrottled, setIsThrottled] = useState(false);
   
-
 
   useEffect(() => {
     const handleRateLimit = () => setIsThrottled(true);
@@ -40,26 +33,13 @@ const App = () => {
 
       {isThrottled && <RateLimitedUi />}
 
-      
-
       <div className="w-full">
-        {/* 4. YOU WERE MISSING THIS OPENING TAG 👇 */}
         <Routes>
-       
-           
-  <Route path="/" element={<Navigate to="/timein" replace />} />
-         <Route path="/timein" element={<TimeIn />} />
-        <Route path="/timeout" element={<TimeOut />} />
-<Route path="*" element={<div>Page Not Found</div>} />
-        
-
-        
-         
-          
-
+          <Route path="/" element={<Navigate to="/timein" replace />} />
+          <Route path="/timein" element={<TimeIn />} />
+          <Route path="/timeout" element={<TimeOut />} />
+          <Route path="*" element={<div>Page Not Found</div>} />
         </Routes> 
-            {/* You had this closing tag, but no opener! */}
-        {/* You had this closing tag, but no opener! */}
       </div>
     </div>
   );

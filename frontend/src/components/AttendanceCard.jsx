@@ -1,13 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { Clock, LogOut } from "lucide-react"; 
+import { Clock, LogOut, ExternalLink } from "lucide-react";
 import { useTimein, useTimeout } from "../hooks/useAttendance";
 
-// 👇 1. Import the audio files correctly (Adjust path if needed)
-// Since your files are in 'src/', and this component is in 'src/components/', use '../'
-import successSound from "../success.mp3";
-import errorSound from "../error.mp3";
-
-const AttendanceCard = ({ type = "IN" }) => {
+const AttendanceCard = ({ type = "IN", onStudentIdChange, onGuestRegistrationRequest, showGuestLink = true }) => {
   const timeInHook = useTimein();
   const timeOutHook = useTimeout();
   const currentHook = type === "IN" ? timeInHook : timeOutHook;
@@ -18,173 +13,106 @@ const AttendanceCard = ({ type = "IN" }) => {
     isLoading, 
     message, 
     studentId, 
-    setStudentId 
+    setStudentId
   } = currentHook;
 
   const [visibleMessage, setVisibleMessage] = useState({ text: "", type: "" });
   const inputRef = useRef(null);
 
-  // 👇 2. Create the Audio Refs using the imported files
-  const successAudio = useRef(new Audio(successSound));
-  const errorAudio = useRef(new Audio(errorSound));
-
-  // 👇 3. Adjust volume (optional, usually good to lower it slightly)
-  useEffect(() => {
-    successAudio.current.volume = 0.5;
-    errorAudio.current.volume = 0.5;
-  }, []);
-
   useEffect(() => {
     setVisibleMessage(message);
+  }, [message]);
 
-    if (message.text) {
-      // 👇 4. Play Sound Logic
-      if (message.type === "success") {
-        successAudio.current.currentTime = 0; // Reset sound to start
-        successAudio.current.play().catch(e => console.log("Audio play failed", e));
-      } else if (message.type === "error") {
-        errorAudio.current.currentTime = 0;
-        errorAudio.current.play().catch(e => console.log("Audio play failed", e));
-      }
-
-      // Hide message after 5 seconds
-      const timer = setTimeout(() => {
-        setVisibleMessage({ text: "", type: "" });
-      }, 5000); 
-      return () => clearTimeout(timer);
-    }
-  }, [message]); // Runs whenever the hook sends a new message
-
-  // Focus input automatically when loading finishes
   useEffect(() => {
-    if (!isLoading) {
-        setTimeout(() => {
-            inputRef.current?.focus();
-        }, 10);
-    }
+    if (!isLoading) inputRef.current?.focus();
   }, [isLoading]);
 
-    const formatStudentId = (value) => {
-    // 1. Allow only numbers (0-9) and the hyphen (-)
-    // Regex explanation: Replace anything that is NOT a number or dash with empty string
-    const cleaned = value.replace(/[^0-9-]/g, "");
-    
-    // 2. Strict length limit (10 chars = 4 numbers + 1 dash + 5 numbers)
+  const formatStudentId = (value) => {
+    let cleaned = value.replace(/[^\d]/g, '');
+    if (cleaned.length > 4) cleaned = cleaned.slice(0, 4) + "-" + cleaned.slice(4, 9);
     return cleaned.slice(0, 10);
   };
 
   const handleInputChange = (e) => {
-    const rawValue = e.target.value;
-    const formattedValue = formatStudentId(rawValue);
+    const formattedValue = formatStudentId(e.target.value);
     setStudentId(formattedValue);
+    onStudentIdChange?.(formattedValue);
   };
 
   const handleSubmit = async () => {
-    if (studentId.length !== 10) return; 
-
-    if (type === "IN") {
-      await timein(studentId);
-    } else {
-      await timeout(studentId);
-    }
-    
+    if (studentId.length !== 10) return;
+    type === "IN" ? await timein(studentId) : await timeout(studentId);
     inputRef.current?.focus();
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSubmit();
-    }
+    if (e.key === "Enter") handleSubmit();
   };
 
-  const isInvalidFormat = studentId.length > 0 && studentId.length < 10;
-
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="neon-box bg-card/80 backdrop-blur-md rounded-2xl p-8 md:p-10 border border-muted/50">
+    <div className="space-y-6">
+      {/* ID Input Section */}
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-gray-300 text-center">Student ID</label>
         
-        <div className="flex justify-center mb-6">
-          <div className="p-4 rounded-full bg-primary/10 pulse-glow">
-            {type === "IN" ? (
-                <Clock className="w-10 h-10 text-primary" />
-            ) : (
-                <LogOut className="w-10 h-10 text-primary" />
-            )}
-          </div>
-        </div>
-
-        <h2 className="text-center text-xl font-semibold text-foreground mb-2 tracking-wide">
-          {type === "IN" ? "Student Time In" : "Student Time Out"}
-        </h2>
-        <p className="text-center text-muted-foreground text-sm mb-8">
-          Enter your ID to record attendance
-        </p>
-
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <label 
-              htmlFor="studentId" 
-              className="text-sm font-medium text-muted-foreground uppercase tracking-wider"
-            >
-              Student ID
-            </label>
-            <input
-              ref={inputRef}
-              id="studentId"
-              type="text"
-              placeholder="2023-12345"
-              value={studentId} 
-              onChange={handleInputChange} 
-              onKeyPress={handleKeyPress}
-              disabled={isLoading}
-              maxLength={10} 
-              className={`input-stranger w-full h-14 text-lg text-center font-mono px-4 rounded-xl placeholder:text-muted-foreground/50
-                ${isInvalidFormat ? "border-destructive focus:border-destructive text-destructive" : ""}
-              `}
-              autoComplete="off"
-              autoFocus
-            />
-            {isInvalidFormat && (
-                <p className="text-xs text-destructive text-center mt-1">
-                    Format must be ####-#####
-                </p>
-            )}
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={isLoading || studentId.length !== 10} 
-            className="btn-stranger w-full h-14 text-lg rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoading ? (
-               <span className="animate-pulse">Processing...</span>
-            ) : (
-               <>
-                 {type === "IN" ? <Clock className="w-5 h-5" /> : <LogOut className="w-5 h-5" />}
-                 {type === "IN" ? "Time In" : "Time Out"}
-               </>
-            )}
-          </button>
-
-          <div className="h-8 flex items-center justify-center">
-            {visibleMessage.text && (
-              <p 
-                className={`text-center text-sm font-medium animate-fade-in ${
-                  visibleMessage.type === "success" 
-                    ? "success-message" 
-                    : "text-destructive"
-                }`}
-              >
-                {visibleMessage.text}
-              </p>
-            )}
-          </div>
-        </div>
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder="2024-12345"
+          value={studentId}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          disabled={isLoading}
+          maxLength={10}
+          className="w-full p-4 bg-black/50 border border-gray-700 rounded-lg text-white font-mono text-center text-lg focus:border-neon-red focus:outline-none"
+          autoComplete="off"
+          autoFocus
+        />
+        <p className="text-xs text-gray-500 text-center">Format: ####-#####</p>
       </div>
 
-      <p className="text-center text-muted-foreground/60 text-xs mt-6">
-        System Active • LPU Registration
-      </p>
+      {/* Guest Link - Only show if showGuestLink is true */}
+      {showGuestLink && (
+        <div className="text-center py-2">
+          <button
+            onClick={onGuestRegistrationRequest}
+            className="inline-flex items-center gap-2 text-sm text-yellow-400 hover:text-yellow-300 transition-colors hover:underline"
+          >
+            <span>Not from CS/IT? Time In here!</span>
+            <ExternalLink className="w-3 h-3" />
+          </button>
+        </div>
+      )}
+
+      {/* Main Button */}
+      <button
+        onClick={handleSubmit}
+        disabled={isLoading || studentId.length !== 10}
+        className={`w-full p-4 rounded-lg font-semibold text-white transition disabled:opacity-50 text-lg ${
+          type === "IN" 
+            ? "bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600" 
+            : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600"
+        }`}
+      >
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-3">
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <span>Processing...</span>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center gap-3">
+            {type === "IN" ? <Clock className="w-6 h-6" /> : <LogOut className="w-6 h-6" />}
+            <span>Time {type}</span>
+          </div>
+        )}
+      </button>
+
+      {/* Status Message */}
+      {visibleMessage.text && (
+        <p className={`text-center text-sm ${visibleMessage.type === "success" ? "text-green-400" : "text-red-400"}`}>
+          {visibleMessage.text}
+        </p>
+      )}
     </div>
   );
 };

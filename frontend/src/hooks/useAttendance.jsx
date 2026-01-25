@@ -6,70 +6,73 @@ export const useTimein = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [isValid, setIsValid] = useState(true)
     const [message, setMessage] = useState({text: '', type:''})
+    const [studentNotFound, setStudentNotFound] = useState(false)
 
     const timein = async (inputId) => {
         const formatRegex = /^\d{4}-\d{5}$/;
-        // FIX 1: 'error' was undefined. Added quotes: 'error'
         if(!formatRegex.test(inputId)){
             setMessage({text:'Format invalid', type: 'error'}) 
             setIsValid(false)
+            setStudentNotFound(false)
             return
         }
 
         setIsLoading(true)
         setMessage({text:'', type: ''})
         setIsValid(true)
+        setStudentNotFound(false)
 
         try {
-            // FIX 2: Removed JSON.stringify. apiRequest/Axios handles objects automatically.
-            // If your utils.js expects a string, keep stringify, but standard axios usage allows objects.
-            // Based on your utils.js parsing logic, we will fix utils.js separately, 
-            // but for now, let's fix the RESPONSE handling.
-            
             const response = await apiRequest('/attendance', {
                 method: 'POST',
-                // You can usually pass the object directly if we clean up utils.js
                 body: JSON.stringify({student_id: inputId, type: 'IN'}) 
             })
 
-            // FIX 3: Axios does NOT have .json() or .ok
-            // Axios automatically throws an error for 4xx/5xx responses, 
-            // so we don't need "if (!response.ok)"
-            
-            const data = response.data; // Access data directly
+            const data = response.data;
 
             setMessage({text: data.message, type: 'success'})
             setStudentId('')
+            setStudentNotFound(false)
         
         } catch(error) {
-            // FIX 4: Handle Axios error object
             const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
-            setMessage({ text: errorMsg, type: 'error'}); // Added quotes to 'error'
+            setMessage({ text: errorMsg, type: 'error'});
+            
+            // Check if error indicates student not found
+            const lowerError = errorMsg.toLowerCase();
+            if (lowerError.includes('not found') || 
+                lowerError.includes('not registered') || 
+                lowerError.includes('does not exist')) {
+                setStudentNotFound(true);
+            }
         } finally {
             setIsLoading(false)
         }
     }
 
-    return { timein, isLoading, message, isValid, studentId, setStudentId }   
+    return { timein, isLoading, message, isValid, studentId, setStudentId, studentNotFound }   
 }
 
-// Apply similar fixes to useTimeout...
 export const useTimeout = () => {
      const [studentId, setStudentId] = useState('')
      const [isValid, setIsValid] = useState(true)
      const [isLoading, setIsLoading] = useState(false)
      const [message, setMessage] = useState({text: '', type: ''})
+     const [studentNotFound, setStudentNotFound] = useState(false)
 
      const timeout = async (inputId) => {
            const formatRegex = /^\d{4}-\d{5}$/;
            if(!formatRegex.test(inputId)){
-            setMessage({text:'invalid format', type: 'error'}) // Fixed quotes
+            setMessage({text:'invalid format', type: 'error'})
             setIsValid(false)
+            setStudentNotFound(false)
             return
            }
+           
            setIsLoading(true)
            setMessage({text:'', type:''})
            setIsValid(true)
+           setStudentNotFound(false)
 
            try{
               const response = await apiRequest('/attendance', {
@@ -77,18 +80,27 @@ export const useTimeout = () => {
                     body: JSON.stringify({student_id: inputId, type: 'OUT'})
                 })
                 
-                // Fixed Response Handling
                 const data = response.data;
                 
                 setStudentId('')
                 setMessage({text: data.message, type:'success'})
                 setIsValid(true)
+                setStudentNotFound(false)
+                
            } catch(error){
                  const errorMsg = error.response?.data?.message || error.response?.data?.error || error.message;
-                 setMessage({text: errorMsg, type: 'error'}) // Fixed quotes
+                 setMessage({text: errorMsg, type: 'error'})
+                 
+                 // Check if error indicates student not found
+                 const lowerError = errorMsg.toLowerCase();
+                 if (lowerError.includes('not found') || 
+                     lowerError.includes('not registered') || 
+                     lowerError.includes('does not exist')) {
+                     setStudentNotFound(true);
+                 }
            } finally {
             setIsLoading(false)
            }
      }
-     return { timeout, isLoading, message, isValid, studentId, setStudentId }
+     return { timeout, isLoading, message, isValid, studentId, setStudentId, studentNotFound }
 }
