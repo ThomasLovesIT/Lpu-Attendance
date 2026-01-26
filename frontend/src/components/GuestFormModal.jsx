@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
-import { X, User, Fingerprint } from "lucide-react";
+import { useState } from "react";
+import { X } from "lucide-react";
+import api from "../lib/axios.js"; 
 
-const GuestFormModal = ({ studentId = "", type = "IN", onClose, onSuccess }) => {
+// REMOVED: studentId prop (to stop syncing inputs)
+const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
   const [form, setForm] = useState({
-    student_id: studentId,
+    student_id: "",
     full_name: ""
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (studentId) setForm(f => ({ ...f, student_id: studentId }));
-  }, [studentId]);
+  // REMOVED: The useEffect that synced input from the parent page
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,23 +26,43 @@ const GuestFormModal = ({ studentId = "", type = "IN", onClose, onSuccess }) => 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.student_id.length !== 10) return setError("ID format: ####-#####");
-    if (!form.full_name.trim()) return setError("Name required");
+    if (form.student_id.length !== 10) {
+        setError("ID format: ####-#####");
+        // Auto-clear error after 2 seconds
+        setTimeout(() => setError(""), 2000);
+        return;
+    }
+    if (!form.full_name.trim()) {
+        setError("Name required");
+        setTimeout(() => setError(""), 2000);
+        return;
+    }
 
     setLoading(true);
     setError("");
 
-    setTimeout(() => {
-      onSuccess?.();
-      setLoading(false);
-      onClose();
-    }, 1000);
+    try {
+        await api.post('/attendance/guest', {
+            student_id: form.student_id,
+            student_name: form.full_name
+        });
+
+        if (onSuccess) onSuccess(); 
+        onClose();
+        
+    } catch (err) {
+        const msg = err.response?.data?.error || "Registration failed.";
+        setError(msg);
+        // Auto-clear error after 2 seconds (Goal #1)
+        setTimeout(() => setError(""), 2000);
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
       <div className="w-full max-w-md bg-black border border-gray-800 rounded-xl p-6">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-white">Guest Registration</h3>
           <button onClick={onClose} className="p-1">
@@ -50,12 +70,10 @@ const GuestFormModal = ({ studentId = "", type = "IN", onClose, onSuccess }) => 
           </button>
         </div>
 
-        {/* Error */}
         {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ID */}
+        {/* Added autoComplete="off" to form to help block browser suggestions */}
+        <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
           <div>
             <label className="text-sm text-gray-300 mb-2 block">Student ID</label>
             <input
@@ -66,12 +84,12 @@ const GuestFormModal = ({ studentId = "", type = "IN", onClose, onSuccess }) => 
               placeholder="2024-12345"
               maxLength={10}
               className="w-full p-3 bg-black/50 border border-gray-700 rounded text-white font-mono text-center focus:border-yellow-500 focus:outline-none"
-              disabled={loading || !!studentId}
+              disabled={loading}
               required
+              autoComplete="off" // Goal #3
             />
           </div>
 
-          {/* Name */}
           <div>
             <label className="text-sm text-gray-300 mb-2 block">Full Name</label>
             <input
@@ -83,10 +101,10 @@ const GuestFormModal = ({ studentId = "", type = "IN", onClose, onSuccess }) => 
               className="w-full p-3 bg-black/50 border border-gray-700 rounded text-white text-center focus:border-yellow-500 focus:outline-none"
               disabled={loading}
               required
+              autoComplete="off" // Goal #3
             />
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={loading || form.student_id.length !== 10 || !form.full_name.trim()}
@@ -95,10 +113,6 @@ const GuestFormModal = ({ studentId = "", type = "IN", onClose, onSuccess }) => 
             {loading ? "Processing..." : "Register & Time " + type}
           </button>
         </form>
-
-        <p className="text-xs text-gray-500 text-center mt-4">
-          Will be added to database automatically
-        </p>
       </div>
     </div>
   );

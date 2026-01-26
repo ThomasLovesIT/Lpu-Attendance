@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast'; 
 
-import RateLimitedUi from './components/RateLimitedUi.jsx';
+
 import TimeIn from './pages/TimeInPage.jsx';
 import TimeOut from './pages/TimeOutPage.jsx';
 
@@ -31,7 +31,7 @@ const App = () => {
         }}
       />
 
-      {isThrottled && <RateLimitedUi />}
+    
 
       <div className="w-full">
         <Routes>
