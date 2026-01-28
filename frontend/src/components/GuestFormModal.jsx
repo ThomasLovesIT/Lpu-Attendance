@@ -1,7 +1,18 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import api from "../lib/axios.js"; 
+import successSound from "../success.mp3";
+import errorSound from "../error.mp3";
 
+const playSuccess = () => {
+  const audio = new Audio(successSound);
+  audio.play().catch(() => {});
+};
+
+const playError = () => {
+  const audio = new Audio(errorSound);
+  audio.play().catch(() => {});
+};
 const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
   const [form, setForm] = useState({
     student_id: "",
@@ -29,11 +40,13 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
     e.preventDefault();
     if (form.student_id.length !== 10) {
         setError("ID must be 10 characters: ####-#####");
+          playError()
         setTimeout(() => setError(""), 2000);
         return;
     }
     if (!form.full_name.trim()) {
         setError("Name required");
+                  playError()
         setTimeout(() => setError(""), 2000);
         return;
     }
@@ -45,14 +58,16 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
         await api.post('/attendance/guest', {
             student_id: form.student_id,
             student_name: form.full_name
+         
         });
-
+             playSuccess();
         if (onSuccess) onSuccess(); 
         onClose();
         
     } catch (err) {
         const msg = err.response?.data?.error || "Registration failed.";
         setError(msg);
+          playError()
         setTimeout(() => setError(""), 2000);
     } finally {
         setLoading(false);
