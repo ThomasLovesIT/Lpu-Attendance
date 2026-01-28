@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Clock, LogOut, ExternalLink } from "lucide-react";
 import { useTimein, useTimeout } from "../hooks/useAttendance";
-import GuestFormModal from "./GuestFormModal"; // Import the modal here
+import GuestFormModal from "./GuestFormModal";
 
 const AttendanceCard = ({ type = "IN", onStudentIdChange, showGuestLink = true }) => {
   const timeInHook = useTimein();
@@ -18,10 +18,9 @@ const AttendanceCard = ({ type = "IN", onStudentIdChange, showGuestLink = true }
   } = currentHook;
 
   const [visibleMessage, setVisibleMessage] = useState({ text: "", type: "" });
-  const [showGuestModal, setShowGuestModal] = useState(false); // Local state for modal
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const inputRef = useRef(null);
 
-  // Sync hook messages to local state
   useEffect(() => {
     if (message.text) {
       setVisibleMessage(message);
@@ -32,16 +31,17 @@ const AttendanceCard = ({ type = "IN", onStudentIdChange, showGuestLink = true }
     if (!isLoading && !showGuestModal) inputRef.current?.focus();
   }, [isLoading, showGuestModal]);
 
-  const formatStudentId = (value) => {
-    let cleaned = value.replace(/[^\d]/g, '');
-    if (cleaned.length > 4) cleaned = cleaned.slice(0, 4) + "-" + cleaned.slice(4, 9);
-    return cleaned.slice(0, 10);
-  };
-
   const handleInputChange = (e) => {
-    const formattedValue = formatStudentId(e.target.value);
-    setStudentId(formattedValue);
-    onStudentIdChange?.(formattedValue);
+    const value = e.target.value;
+    
+    // Only allow digits and hyphens
+    const cleaned = value.replace(/[^\d-]/g, '');
+    
+    // Limit to 10 characters
+    const limited = cleaned.slice(0, 10);
+    
+    setStudentId(limited);
+    onStudentIdChange?.(limited);
   };
 
   const handleSubmit = async () => {
@@ -54,14 +54,12 @@ const AttendanceCard = ({ type = "IN", onStudentIdChange, showGuestLink = true }
     if (e.key === "Enter") handleSubmit();
   };
 
-  // Goal #2: Function to handle Guest Success
   const handleGuestSuccess = () => {
     setVisibleMessage({ 
       text: "Guest Successfully Registered & Timed In!", 
       type: "success" 
     });
     
-    // Clear the success message after 5 seconds
     setTimeout(() => {
         setVisibleMessage({ text: "", type: "" });
     }, 5000);
@@ -83,10 +81,10 @@ const AttendanceCard = ({ type = "IN", onStudentIdChange, showGuestLink = true }
           disabled={isLoading}
           maxLength={10}
           className="w-full p-4 bg-black/50 border border-gray-700 rounded-lg text-white font-mono text-center text-lg focus:border-neon-red focus:outline-none"
-          autoComplete="off" // Block autocomplete here too
+          autoComplete="off"
           autoFocus
         />
-        <p className="text-xs text-gray-500 text-center">Format: ####-#####</p>
+        <p className="text-xs text-gray-500 text-center">Format: ####-##### (numbers and hyphen only)</p>
       </div>
 
       {/* Main Button */}
@@ -132,7 +130,7 @@ const AttendanceCard = ({ type = "IN", onStudentIdChange, showGuestLink = true }
         </div>
       )}
 
-      {/* Render Modal Here - Goal #4: Note we do NOT pass studentId prop */}
+      {/* Render Modal Here */}
       {showGuestModal && (
         <GuestFormModal 
             type={type} 

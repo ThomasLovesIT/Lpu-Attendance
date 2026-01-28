@@ -2,7 +2,6 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import api from "../lib/axios.js"; 
 
-// REMOVED: studentId prop (to stop syncing inputs)
 const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
   const [form, setForm] = useState({
     student_id: "",
@@ -11,15 +10,17 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // REMOVED: The useEffect that synced input from the parent page
-
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
     if (name === "student_id") {
-      let cleaned = value.replace(/[^\d]/g, '');
-      if (cleaned.length > 4) cleaned = cleaned.slice(0, 4) + "-" + cleaned.slice(4, 9);
-      setForm(f => ({ ...f, [name]: cleaned.slice(0, 10) }));
+      // Only allow digits and hyphens for Student ID
+      const cleaned = value.replace(/[^\d-]/g, '');
+      // Limit to 10 characters
+      const limited = cleaned.slice(0, 10);
+      setForm(f => ({ ...f, [name]: limited }));
     } else {
+      // For full name, allow any characters (no restrictions)
       setForm(f => ({ ...f, [name]: value }));
     }
   };
@@ -27,8 +28,7 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.student_id.length !== 10) {
-        setError("ID format: ####-#####");
-        // Auto-clear error after 2 seconds
+        setError("ID must be 10 characters: ####-#####");
         setTimeout(() => setError(""), 2000);
         return;
     }
@@ -53,7 +53,6 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
     } catch (err) {
         const msg = err.response?.data?.error || "Registration failed.";
         setError(msg);
-        // Auto-clear error after 2 seconds (Goal #1)
         setTimeout(() => setError(""), 2000);
     } finally {
         setLoading(false);
@@ -72,7 +71,6 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
 
         {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
 
-        {/* Added autoComplete="off" to form to help block browser suggestions */}
         <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
           <div>
             <label className="text-sm text-gray-300 mb-2 block">Student ID</label>
@@ -86,8 +84,9 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
               className="w-full p-3 bg-black/50 border border-gray-700 rounded text-white font-mono text-center focus:border-yellow-500 focus:outline-none"
               disabled={loading}
               required
-              autoComplete="off" // Goal #3
+              autoComplete="off"
             />
+            <p className="text-xs text-gray-500 mt-1">Numbers and hyphen only (####-#####)</p>
           </div>
 
           <div>
@@ -101,7 +100,7 @@ const GuestFormModal = ({ type = "IN", onClose, onSuccess }) => {
               className="w-full p-3 bg-black/50 border border-gray-700 rounded text-white text-center focus:border-yellow-500 focus:outline-none"
               disabled={loading}
               required
-              autoComplete="off" // Goal #3
+              autoComplete="off"
             />
           </div>
 
