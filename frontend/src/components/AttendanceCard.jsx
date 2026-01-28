@@ -3,6 +3,7 @@ import { Clock, LogOut, ExternalLink } from "lucide-react";
 import { useTimein, useTimeout } from "../hooks/useAttendance";
 import GuestFormModal from "./GuestFormModal";
 
+
 const AttendanceCard = ({ type = "IN", onStudentIdChange, showGuestLink = true }) => {
   const timeInHook = useTimein();
   const timeOutHook = useTimeout();

@@ -1,5 +1,17 @@
 import { useState } from 'react'
 import { apiRequest } from '../lib/utils.js'; 
+import successSound from "../success.mp3";
+import errorSound from "../error.mp3";
+
+const playSuccess = () => {
+  const audio = new Audio(successSound);
+  audio.play().catch(() => {});
+};
+
+const playError = () => {
+  const audio = new Audio(errorSound);
+  audio.play().catch(() => {});
+};
 
 export const useTimein = () => {
     const [studentId, setStudentId] = useState('');
@@ -12,6 +24,7 @@ export const useTimein = () => {
         const formatRegex = /^\d{4}-\d{5}$/;
         if(!formatRegex.test(inputId)){
             setMessage({text:'Format invalid', type: 'error'}) 
+              playError(); // 🔊
             setIsValid(false)
             setStudentNotFound(false)
             return
@@ -31,6 +44,7 @@ export const useTimein = () => {
             const data = response.data;
 
             setMessage({text: data.message, type: 'success'})
+            playSuccess(); // 🔊
             setStudentId('')
             setStudentNotFound(false)
         
@@ -64,6 +78,7 @@ export const useTimeout = () => {
            const formatRegex = /^\d{4}-\d{5}$/;
            if(!formatRegex.test(inputId)){
             setMessage({text:'invalid format', type: 'error'})
+                 playError(); // 🔊
             setIsValid(false)
             setStudentNotFound(false)
             return
@@ -84,6 +99,7 @@ export const useTimeout = () => {
                 
                 setStudentId('')
                 setMessage({text: data.message, type:'success'})
+                playSuccess(); // 🔊
                 setIsValid(true)
                 setStudentNotFound(false)
                 
